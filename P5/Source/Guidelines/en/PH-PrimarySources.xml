@@ -516,6 +516,7 @@ used to define a polygon of any shape using this coordinate system:-->
 	   <xi:include href="../../Specs/zone.xml"/>
 	   <xi:include href="../../Specs/path.xml"/>
 	   <xi:include href="../../Specs/model.resource.xml"/>
+      <xi:include href="../../Specs/model.resourceLike.xml"/>
 	   <xi:include href="../../Specs/model.describedResource.xml"/>
          </specGrp>
 
