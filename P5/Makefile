@@ -7,6 +7,7 @@ INJENKINS=false
 INPUTLANGUAGE=en
 DOCUMENTATIONLANGUAGE=en
 LATEX=pdflatex
+LUALATEX=lualatex
 XELATEX=xelatex
 VERBOSE=
 PREFIX=/usr
@@ -145,21 +146,38 @@ fonttest:
 	rm -f fonttest.*
 
 Guidelines.pdf: check.stamp p5.xml Utilities/guidelines-latex.xsl
-	@echo check if XeLaTeX exist
-	@command -v  xelatex || exit 1
-	perl -p -e \
-		"s+http://www.tei-c.org/release/xml/tei/stylesheet+${XSL}+; \
-		 s+/usr/share/xml/tei/stylesheet+${XSL}+;" \
-		Utilities/guidelines-latex.xsl > Utilities/guidelines.xsl
-	@echo BUILD: build Lite version of Guidelines, then LaTeX version of Guidelines from Lite, then run to PDF using XeLaTeX
-	@echo Make sure you have Junicode and Noto CJK fonts installed
-	${ANT} -lib Utilities/lib/${SAXONJAR} -f antbuilder.xml -DXSL=${XSL} -DXELATEX=${XELATEX} pdfonce
-
+	ifeq (${LATEX}, "lualatex")
+		@echo check if LuaLaTeX exist
+		@command -v lualatex || exit 1
+		perl -p -e \
+			"s+http://www.tei-c.org/release/xml/tei/stylesheet+${XSL}+; \
+			 s+/usr/share/xml/tei/stylesheet+${XSL}+;" \
+			Utilities/guidelines-latex.xsl > Utilities/guidelines.xsl
+		@echo BUILD: build Lite version of Guidelines, then LaTeX version of Guidelines from Lite, then run to PDF using LuaLaTeX
+		@echo Make sure you have Junicode and Noto CJK fonts installed
+		${ANT} -lib Utilities/lib/${SAXONJAR} -f antbuilder.xml -DXSL=${XSL} -DLUALATEX=${LUALATEX} pdfonce
+	else
+		@echo check if XeLaTeX exist
+		@command -v  xelatex || exit 1
+		perl -p -e \
+			"s+http://www.tei-c.org/release/xml/tei/stylesheet+${XSL}+; \
+			 s+/usr/share/xml/tei/stylesheet+${XSL}+;" \
+			Utilities/guidelines-latex.xsl > Utilities/guidelines.xsl
+		@echo BUILD: build Lite version of Guidelines, then LaTeX version of Guidelines from Lite, then run to PDF using XeLaTeX
+		@echo Make sure you have Junicode and Noto CJK fonts installed
+		${ANT} -lib Utilities/lib/${SAXONJAR} -f antbuilder.xml -DXSL=${XSL} -DXELATEX=${XELATEX} pdfonce
+	endif
+	
 pdf-complete:
-	${ANT} -lib Utilities/lib/${SAXONJAR} -f antbuilder.xml -DXSL=${XSL} -DXELATEX=${XELATEX} pdfrest 2> pdfbuild.log 1> pdfbuild.log
-	grep -v "Failed to convert input string to UTF16" pdfbuild.log
-	for i in Guidelines*aux; do perl -p -i -e 's/.*zf@fam.*//' $$i; done
-
+	ifeq (${LATEX}, "lualatex")
+		${ANT} -lib Utilities/lib/${SAXONJAR} -f antbuilder.xml -DXSL=${XSL} -DLUALATEX=${LUALATEX} pdfrest 2> pdfbuild.log 1> pdfbuild.log
+		grep -v "Failed to convert input string to UTF8" pdfbuild.log
+		for i in Guidelines*aux; do perl -p -i -e 's/.*zf@fam.*//' $$i; done
+	else
+		${ANT} -lib Utilities/lib/${SAXONJAR} -f antbuilder.xml -DXSL=${XSL} -DXELATEX=${XELATEX} pdfrest 2> pdfbuild.log 1> pdfbuild.log
+		grep -v "Failed to convert input string to UTF16" pdfbuild.log
+		for i in Guidelines*aux; do perl -p -i -e 's/.*zf@fam.*//' $$i; done
+	endif
 rewraprnc:
 	for i in Guidelines-REF*tex; \
 	  do \
